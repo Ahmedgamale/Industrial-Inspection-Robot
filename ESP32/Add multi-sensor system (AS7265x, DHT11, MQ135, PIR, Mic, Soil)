@@ -1,0 +1,97 @@
+#include <Wire.h>
+#include <SparkFun_AS7265X.h>
+#include <DHT.h>
+
+/* ============ PIN DEFINITIONS ============ */
+#define SDA_PIN 21
+#define SCL_PIN 22
+
+#define MQ135_PIN 25      // Analog
+#define SOIL_PIN 2        // Digital (D0)
+#define DHT_PIN 15
+#define MIC_PIN 34        // Analog input only
+#define PIR_PIN 13
+
+#define DHTTYPE DHT11
+
+/* ============ OBJECTS ============ */
+AS7265X as7265x;
+DHT dht(DHT_PIN, DHTTYPE);
+
+/* ============ SETUP ============ */
+void setup() {
+  Serial.begin(115200);
+  delay(1000);
+
+  // I2C
+  Wire.begin(SDA_PIN, SCL_PIN);
+
+  // AS7265X
+  Serial.println("Initializing AS7265X...");
+  if (!as7265x.begin()) {
+    Serial.println("AS7265X NOT DETECTED!");
+    while (1);
+  }
+  Serial.println("AS7265X READY");
+
+  // Pin modes
+  pinMode(SOIL_PIN, INPUT);
+  pinMode(PIR_PIN, INPUT);
+
+  // DHT
+  dht.begin();
+
+  Serial.println("All Sensors Initialized Successfully");
+}
+
+/* ============ LOOP ============ */
+void loop() {
+
+  /* ===== AS7265X ===== */
+  as7265x.takeMeasurements();
+  Serial.println("\n--- AS7265X ---");
+  Serial.print("A: "); Serial.println(as7265x.getCalibratedA());
+  Serial.print("B: "); Serial.println(as7265x.getCalibratedB());
+  Serial.print("C: "); Serial.println(as7265x.getCalibratedC());
+
+  /* ===== MQ135 GAS ===== */
+  int gasValue = analogRead(MQ135_PIN);
+  Serial.print("Gas Value: ");
+  Serial.println(gasValue);
+
+  /* ===== SOIL (DIGITAL) ===== */
+  int soilState = digitalRead(SOIL_PIN);
+  Serial.print("Soil: ");
+  if (soilState == LOW)
+    Serial.println("WET");
+  else
+    Serial.println("DRY");
+
+  /* ===== MICROPHONE ===== */
+  int micValue = analogRead(MIC_PIN);
+  Serial.print("Sound Level: ");
+  Serial.println(micValue);
+
+  /* ===== DHT11 ===== */
+  float hum = dht.readHumidity();
+  float temp = dht.readTemperature();
+
+  if (!isnan(hum) && !isnan(temp)) {
+    Serial.print("Humidity: ");
+    Serial.print(hum);
+    Serial.print("% | Temp: ");
+    Serial.print(temp);
+    Serial.println(" C");
+  } else {
+    Serial.println("DHT11 Read Error");
+  }
+
+  /* ===== PIR ===== */
+  if (digitalRead(PIR_PIN) == HIGH)
+    Serial.println("Motion Detected!");
+  else
+    Serial.println("No Motion");
+
+  Serial.println("-----------------------------------");
+  delay(1000);
+}
