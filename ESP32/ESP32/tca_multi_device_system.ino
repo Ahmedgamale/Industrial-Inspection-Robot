@@ -12,9 +12,9 @@
 
 Adafruit_MLX90614 mlx;
 RTC_DS3231 rtc;
-LiquidCrystal_I2C lcd(0x27, 16, 2);  // غير 0x27 لو لزم
+LiquidCrystal_I2C lcd(0x27, 16, 2);
 
-// اختيار قناة TCA
+
 void tcaSelect(uint8_t channel) {
   if (channel > 7) return;
   Wire.beginTransmission(0x70);
@@ -48,8 +48,6 @@ void setup() {
   }
   Serial.println("✅ RTC READY");
 
-  // لو أول مرة تشغّل RTC، فعّل السطر ده مرة واحدة
-  // rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
 
   // -------- MLX INIT (Channel 0) --------
   tcaSelect(MLX_CHANNEL);
@@ -70,15 +68,14 @@ void setup() {
 }
 
 void loop() {
-  // ---- قراءة الحرارة ----
+  // ---- temp readings  ----
   tcaSelect(MLX_CHANNEL);
   float objTemp = mlx.readObjectTempC();
 
-  // ---- قراءة الوقت ----
+  // ----  time readings ----
   tcaSelect(RTC_CHANNEL);
   DateTime now = rtc.now();
 
-  // ---- طباعة على Serial ----
   Serial.print("Temp: ");
   Serial.print(objTemp);
   Serial.print(" C | Time: ");
@@ -88,7 +85,7 @@ void loop() {
   Serial.print(":");
   Serial.println(now.second());
 
-  // ---- عرض على LCD ----
+  // ----  LCD ----
   tcaSelect(LCD_CHANNEL);
   lcd.clear();
   lcd.setCursor(0, 0);
